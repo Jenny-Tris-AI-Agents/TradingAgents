@@ -3,7 +3,7 @@ name: Strategy Knowledge Base Sync
 on:
   push:
     paths:
-      - [cite_start]'research_papers/**.pdf' # Triggers only when new PDFs are uploaded [cite: 6]
+      - [cite_start]'Research_Papers/**.pdf' # Triggers only when new PDFs are uploaded [cite: 6]
   [cite_start]workflow_dispatch: # Allows manual trigger [cite: 8, 229]
 
 jobs:
