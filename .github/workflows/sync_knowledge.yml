@@ -3,27 +3,27 @@ name: Strategy Knowledge Base Sync
 on:
   push:
     paths:
-      - [cite_start]'research_papers/**.pdf' # 确保文件夹名称全小写 [cite: 64, 72]
+      - 'research_papers/**.pdf'
   workflow_dispatch: 
 
 jobs:
   build-knowledge:
     runs-on: ubuntu-latest
     permissions:
-      [cite_start]contents: write # 必须开启此权限才能将总结存回仓库 [cite: 6, 8, 46]
-    
-    [cite_start]steps: # 注意：这一行必须与上面的 permissions 对齐 
+      contents: write
+
+    steps:
       - name: Checkout Repository
-        [cite_start]uses: actions/checkout@v5 # 适配 Node.js 24 [cite: 34, 150]
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        [cite_start]uses: actions/setup-python@v6 # 适配 Node.js 24 [cite: 34, 150]
+        uses: actions/setup-python@v6
         with:
-          [cite_start]python-version: '3.12' # 2026 年推荐使用的 Python 版本 [cite: 132, 137]
+          python-version: '3.12'
 
-      - name: Install Latest SDK
+      - name: Install Dependencies
         run: |
-          pip install google-genai pypdf # 使用 2026 年最新的 google-genai 库 [cite: 131]
+          pip install google-generativeai pypdf
 
       - name: Run Ingestion Script
         env:
@@ -35,18 +35,18 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add knowledge_base/*.md
-          # 仅在有变动时 commit，避免 workflow 报错 [cite: 50, 58]
-          git commit -m "Auto-update strategy knowledge base" || echo "No changes to commit"
-          git push origin main
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update knowledge base" && git push)
 
+      # 新增：任务完成后的 Discord 通知步骤
       - name: Send Notification to Discord
-        [cite_start]if: always() # 无论成功或失败都发送通知，方便排查 [cite: 99, 104]
+        if: always() # 无论成功还是失败都发送通知，方便你排查
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            msg="✅ 成功：新策略已转化为摘要并存入知识库。"
+          status="${{ job.status }}"
+          if [ "$status" = "success" ]; then
+            msg="✅ 知识库同步成功！新论文已转化为策略摘要。"
           else
-            msg="❌ 失败：知识库同步任务出错，请检查 GitHub Logs。"
+            msg="❌ 知识库同步失败！请检查 GitHub Actions 日志排查错误。"
           fi
           curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$msg\"}" $DISCORD_WEBHOOK_URL
