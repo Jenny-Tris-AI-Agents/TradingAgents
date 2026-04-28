@@ -10,8 +10,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
-for m in genai.list_models(): print(m.name)
-model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
+# for m in genai.list_models(): print(m.name)
+model = genai.GenerativeModel('models/gemini-flash-latest')
 
 def summarize_paper(pdf_path):
     """
