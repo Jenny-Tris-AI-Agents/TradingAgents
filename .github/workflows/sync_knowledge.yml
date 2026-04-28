@@ -1,0 +1,39 @@
+name: Strategy Knowledge Base Sync
+
+on:
+  push:
+    paths:
+      - [cite_start]'research_papers/**.pdf' # Triggers only when new PDFs are uploaded [cite: 6]
+  [cite_start]workflow_dispatch: # Allows manual trigger [cite: 8, 229]
+
+jobs:
+  build-knowledge:
+    runs-on: ubuntu-latest
+    permissions:
+      [cite_start]contents: write # Required to push summaries back to the repo [cite: 6, 8]
+
+    steps:
+      - name: Checkout Repository
+        [cite_start]uses: actions/checkout@v5 # Node.js 24 Compatible [cite: 150]
+
+      - name: Set up Python
+        [cite_start]uses: actions/setup-python@v6 # Node.js 24 Compatible [cite: 150]
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install google-generativeai pypdf
+
+      - name: Run Ingestion Script
+        env:
+          [cite_start]GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # Securely pulled from GitHub Secrets [cite: 9, 106]
+        run: python ingest_papers.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add knowledge_base/*.md
+          # Only commit if there are new summaries to prevent errors [cite: 8]
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update knowledge base with new strategy summaries" && git push)
