@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install google-generativeai pypdf
+          pip install google-genai pypdf
 
       - name: Run Ingestion Script
         env:
