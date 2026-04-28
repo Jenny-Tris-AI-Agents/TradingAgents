@@ -2,23 +2,36 @@ name: Trading Agent Daily Pulse
 
 on:
   schedule:
-    # This runs at 08:30 AM EST (12:30 UTC) every Monday-Friday
+    # 这里的 cron 时间是 UTC 12:30，即 EST 08:30
     - cron: '30 12 * * 1-5'
-  workflow_dispatch: # Allows you to trigger it manually from GitHub or Discord
+  workflow_dispatch: # 允许手动点击按钮测试
 
 jobs:
   ping-agent:
     runs-on: ubuntu-latest
     steps:
+      # 1. 升级到 v5 以支持 Node.js 24 [cite: 173]
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
+      # 2. 升级到 v6 以支持 Node.js 24 [cite: 173]
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
-      - name: Verify Connection
+      - name: Verify Local Connection
         run: |
-          echo "Trading Agent is Online!"
+          echo "Trading Agent is Online internally!"
           python --version
+
+      # 3. 核心步骤：将消息发送到 Discord [cite: 125, 172]
+      - name: Send Pulse to Discord
+        env:
+          # 必须在这里引用你在 GitHub Secrets 中设置的变量名
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🚀 **Trading Agent 报告**：云端大脑已成功激活！\n当前环境：GitHub Actions (Node.js 24)\n状态：在线 24/7"}' \
+               $DISCORD_WEBHOOK_URL
