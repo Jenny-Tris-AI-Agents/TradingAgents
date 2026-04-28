@@ -10,7 +10,7 @@ jobs:
   build-knowledge:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      [cite_start]contents: write # 必须确保有写入权限 [cite: 83]
 
     steps:
       - name: Checkout Repository
@@ -19,24 +19,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.12' # 升级到 3.12 解决 2026 兼容性
 
-      - name: Install Dependencies
+      - name: Install Latest SDK
         run: |
-          pip install google-generativeai pypdf
+          pip install google-genai pypdf # 安装新版库
 
       - name: Run Ingestion Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python ingest_papers.py
 
-      - name: Commit and Push Changes
+      - name: Force Push Changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add knowledge_base/*.md
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update knowledge base" && git push)
-
+          # 强制 commit 并 push，确保文件回到仓库
+          git commit -m "Sync: New strategy summaries generated" || echo "No changes to commit"
+          git push origin main
+          
       # 新增：任务完成后的 Discord 通知步骤
       - name: Send Notification to Discord
         if: always() # 无论成功还是失败都发送通知，方便你排查
