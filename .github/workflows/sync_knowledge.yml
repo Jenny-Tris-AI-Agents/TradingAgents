@@ -3,21 +3,21 @@ name: Strategy Knowledge Base Sync
 on:
   push:
     paths:
-      - 'research_papers/**.pdf' # CRITICAL: Ensure this matches your folder name exactly
+      - 'research_papers/**.pdf'
   workflow_dispatch: 
 
 jobs:
   build-knowledge:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to save Markdown summaries back to your repo
+      contents: write
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5 # 2026 Node.js 24 Compatible
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v6 # 2026 Node.js 24 Compatible
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
@@ -36,3 +36,17 @@ jobs:
           git config --local user.name "GitHub Action"
           git add knowledge_base/*.md
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update knowledge base" && git push)
+
+      # 新增：任务完成后的 Discord 通知步骤
+      - name: Send Notification to Discord
+        if: always() # 无论成功还是失败都发送通知，方便你排查
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          status="${{ job.status }}"
+          if [ "$status" = "success" ]; then
+            msg="✅ 知识库同步成功！新论文已转化为策略摘要。"
+          else
+            msg="❌ 知识库同步失败！请检查 GitHub Actions 日志排查错误。"
+          fi
+          curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$msg\"}" $DISCORD_WEBHOOK_URL
